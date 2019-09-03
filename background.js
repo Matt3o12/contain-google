@@ -54,6 +54,9 @@ const tabsWaitingToLoad = {};
 const googleHostREs = [];
 const youtubeHostREs = [];
 
+let customDomainsREs = [];
+let customDomainsCached = null;
+
 async function isMACAddonEnabled () {
   try {
     const macAddonInfo = await browser.management.get(MAC_ADDON_ID);
@@ -256,8 +259,7 @@ function isGoogleURL (url) {
 
 function isYouTubeURL (url) {
   const parsedUrl = new URL(url);
-  for (let youtubeHostRE of youtubeHostREs) {
-    if (youtubeHostRE.test(parsedUrl.host)) {
+  for (let youtubeHostRE of youtubeHostREs) { if (youtubeHostRE.test(parsedUrl.host)) {
       return true;
     }
   }
@@ -279,6 +281,33 @@ function isFlightsURL (url) {
   return parsedUrl.pathname.startsWith('/flights');
 }
 
+function isCustomURL (url, customDomains) {
+  const matchOperatorsRegex = /[|\\{}()[\]^$+*?.-]/g;
+
+  console.log(url, customDomains);
+  if (customDomains !== customDomainsCached) {
+    console.log("Reparsing custom domains");
+    customDomainREs = [];
+    for (let customDomain of customDomains.split('\n')) {
+      console.log("test", customDomain, customDomains);
+      if (customDomain !== "") {
+        customDomain = customDomain.replace(matchOperatorsRegex, '\\$&').replace("\\*", ".*");
+        customDomainREs.push(customDomain);
+      }
+    }
+
+    customDomainsCached = customDomains
+  }
+
+  const parsedUrl = new URL(url);
+  for (let domainRE of customDomainsREs) { 
+    if (domainRE.test(parsedUrl.host)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function shouldContainInto (url, tab) {
   if (!url.startsWith("http")) {
     // we only handle URLs starting with http(s)
@@ -292,6 +321,10 @@ function shouldContainInto (url, tab) {
   }
 
   if (handleUrl && extensionSettings.ignore_searchpages && isSearchPageURL(url)) {
+    handleUrl = false;
+  }
+
+  if (handleUrl && isCustomURL(url, extensionSettings.whitelist_domains||"")) {
     handleUrl = false;
   }
 

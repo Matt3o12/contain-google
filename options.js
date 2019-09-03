@@ -7,7 +7,8 @@ function onOptionsPageSave(e)
 		"ignore_youtube": document.querySelector("#ignore_youtube").checked,
 		"ignore_searchpages": document.querySelector("#ignore_searchpages").checked,
 		"ignore_maps": document.querySelector("#ignore_maps").checked,
-		"ignore_flights": document.querySelector("#ignore_flights").checked
+		"ignore_flights": document.querySelector("#ignore_flights").checked,
+		"whitelist_domains": document.querySelector("#whitelist_domains").value,
 	});
 
 	browser.runtime.reload();
@@ -23,6 +24,7 @@ function onOptionsPageLoaded()
 		document.querySelector("#ignore_searchpages").checked = res.ignore_searchpages || false;
 		document.querySelector("#ignore_maps").checked = res.ignore_maps || false;
 		document.querySelector("#ignore_flights").checked = res.ignore_flights || false;
+		document.querySelector("#whitelist_domains").value = res.whitelist_domains || "";
 	});
 }
 
